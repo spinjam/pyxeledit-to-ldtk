@@ -22,17 +22,11 @@ fn main() {
 }
 
 fn build_tileset_image(path: &Path) -> SharedData {
-    let tiles_per_row = 16; // 16*32px
     let temp_dir = env::temp_dir();
     println!("Temporary directory: {}", temp_dir.display());
 
     let mut tiles: Vec<&str> = Vec::new(); // tile filenames (no folder)
 
-    /*
-    let source_path = Path::new(path);
-    let source_name = source_path.file_stem().unwrap();
-    let source_filename = source_path.to_str().unwrap();
-     */
     let source_filename = path.to_str().unwrap();
     let source_file = path.file_name().unwrap().to_os_string().into_string().unwrap();
     let source_name = path.file_stem().unwrap().to_os_string().into_string().unwrap();
@@ -90,6 +84,8 @@ fn build_tileset_image(path: &Path) -> SharedData {
 
     // get tile width and height from Pyxel Edit (json)
     let json = get_pyxel_json_map(path);
+    let tileset = json["tileset"].as_object().unwrap();
+    let tiles_per_row = tileset["tilesWide"].as_u64().unwrap();
     let canvas = json["canvas"].as_object().unwrap();
     let tile_w = canvas["tileWidth"].as_u64().unwrap();
     let tile_h = canvas["tileHeight"].as_u64().unwrap();

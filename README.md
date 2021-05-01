@@ -18,6 +18,12 @@ Supported versions:
 
 pyxeledit-to-ldtk <source_pyxeledit>
 
+## Current status
+
+Only convert pyxel edit tileset images into a unique tileset image (png).
+
+Map conversion not implemented yet. Only a blank LDtk file is generated.
+
 ## Credits
 
 #### Pyxel Edit 
