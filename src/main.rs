@@ -144,8 +144,15 @@ fn build_tileset_image(path: &Path) -> SharedData {
 
 // -----------------------------------------
 fn real_main() -> i32 {
-    let source_path = Path::new("resources/sunnyland-01.pyxel");
+    let args: Vec<String> = env::args().collect();
+    println!("args = {:?}",args);
+    if args.len() < 2 {
+        println!("No arguments");
+        return 1;
+    }
+    let source_pyxeledit = &args[1];
 
+    let source_path = Path::new(source_pyxeledit);
     let data = build_tileset_image(&source_path);
     convert(&source_path, &data);
 

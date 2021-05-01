@@ -13,6 +13,11 @@ Supported versions:
 * Pyxel Edit : 0.4.9
 * LDtk:  v.0.8.1
 
+
+## Arguments
+
+pyxeledit-to-ldtk <source_pyxeledit>
+
 ## Credits
 
 #### Pyxel Edit 
