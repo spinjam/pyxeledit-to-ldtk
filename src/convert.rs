@@ -67,7 +67,8 @@ fn build_ldtk_layer_instance() -> LayerInstance {
         grid_tiles: vec![],
         int_grid: Option::None,
         int_grid_csv: vec![],
-        layer_def_uid: 1,
+        /// Reference the Layer definition UID (important!)
+        layer_def_uid: 2,
         level_id: 0,
         override_tileset_uid: Option::None,
         px_offset_x: 0,
@@ -77,7 +78,7 @@ fn build_ldtk_layer_instance() -> LayerInstance {
     }
 }
 
-fn build_ldtk_level(uid:usize) -> Level {
+fn build_ldtk_level(uid: usize) -> Level {
     println!(">>> building level...");
     Level {
         bg_color: "".to_owned(),
@@ -100,11 +101,11 @@ fn build_ldtk_level(uid:usize) -> Level {
     }
 }
 
-fn build_ldtk(tileset:TilesetDefinition) -> Ldtk {
+fn build_ldtk(tileset: TilesetDefinition) -> Ldtk {
     let tile_grid_size = tileset.tile_grid_size;
 
     let intGridValDef = IntGridValueDefinition {
-      value: 1,
+        value: 1,
         identifier: Option::None,
         color: "#000000".to_string(),
     };
@@ -112,6 +113,7 @@ fn build_ldtk(tileset:TilesetDefinition) -> Ldtk {
     let layerDef = LayerDefinition {
         layer_definition_type: "Tiles".to_string(),
         identifier: "Tiles".to_string(),
+        /// important: same in LayerInstance (?)
         uid: 2,
         grid_size: tile_grid_size,
         display_opacity: 1.0,
@@ -165,49 +167,47 @@ fn build_ldtk(tileset:TilesetDefinition) -> Ldtk {
 }
 
 // -----------------------------------------------------
-fn pyxel_tilerefs_to_ldtk(tilerefs: &Map<String, Value>, map_w: i64, map_h:i64) -> Vec<TileInstance> {
-
-    let mut _pyxel_tilerefs: Vec<(i64, i64)> = vec![];
-    let mut _pyxel_coords: Vec<(i64, i64)> = vec![];
-
-    let mut grid_tiles:Vec<TileInstance> = vec![];
-    for y in 0..map_w {
-        for x in 0..map_h {
-            grid_tiles.push(TileInstance {
-                d: vec![],
-                f: 0,
-                px: vec![],
-                src: vec![],
-                t: 0,
-            });
-        }
-    }
+fn pyxel_tilerefs_to_ldtk(
+    tile_w: i64,
+    tilerefs: &Map<String, Value>,
+    map_w: i64, map_h: i64,
+) -> Vec<TileInstance> {
+    let mut grid_tiles: Vec<TileInstance> = vec![];
 
     // iterate Pyxel Edit tile references
+    let mut counter = 0;
     for (key, value) in tilerefs {
         let tile_ref = value.as_object().unwrap();
-        let tile_pos = key.parse::<usize>().unwrap();
+        let tile_pos = key.parse::<i64>().unwrap();
         let tile_index = tile_ref["index"].as_i64().unwrap();
         //print!("pos={} index={}", tile_pos, tile_index);
-        //pyxel_tilerefs.push((pyxel_tile_pos, tile_index));
 
-        let pos_x:usize = tile_pos % map_w as usize;
-        let pos_y = tile_pos / map_w as usize;
+        // x,y coords based on pyxel tile position
+        let pos_x: i64 = (tile_pos % map_w) as i64;
+        let pos_y = (tile_pos / map_w) as i64;
         //print!("x={} y={} ",pos_x,pos_y);
-        // let gridtile:&TileInstance = &grid_tiles[pos_y * (map_w as usize) + pos_x];
+        grid_tiles.push(TileInstance {
+            /// Pixel coordinates of the tile in the **layer**
+            /// (`[x,y]` format). Don't forget optional
+            /// layer offsets, if they exist!
+            px: vec![(pos_x * tile_w) as i64, (pos_y * tile_w) as i64],
+            //px: vec![0, 0],
+            /// Pixel coordinates of the tile in the **tileset** (`[x,y]` format)
+            src: vec![0, 0],
+            /// flip bits
+            f: 0,
+            /// tile id in the corresponding tileset
+            t: tile_index,
+            /// Internal data used by the editor.
+            /// For auto-layer tiles: `[ruleId, coordId]`
+            /// For tile-layer tiles: `[coordId]`
+            // d: vec![tile_index],
+            d: vec![pos_y * map_w + pos_x],
+        });
+        counter += 1;
     }
-    // println!("\n");
-
 
     grid_tiles
-    /*
-    for tilerefs in pyxel_tilerefs {
-        let pos: i64 = tilerefs.0;
-        let pos_x: i64 = pos % map_w;
-        let pos_y = pos / map_w;
-        pyxel_coords.push((pos_x, pos_y));
-    }
-    */
 }
 
 // -----------------------------------------------------
@@ -254,10 +254,10 @@ pub fn convert(path: &Path, data: &SharedData) {
         cached_pixel_data: Option::None,
     };
 
-    let mut ldtk:Ldtk = build_ldtk(tileset);
+    let mut ldtk: Ldtk = build_ldtk(tileset);
 
     let layers = canvas["layers"].as_object().unwrap();
-    for (li,layer) in layers.iter().enumerate() {
+    for (li, layer) in layers.iter().enumerate() {
         let l = layer.1.as_object().unwrap();
         let layer_type = l["type"].as_str().unwrap();
         let layer_name = l["name"].as_str().unwrap();
@@ -265,7 +265,7 @@ pub fn convert(path: &Path, data: &SharedData) {
 
         let tile_refs = l["tileRefs"].as_object().unwrap();
         //println!("num tile refs {}", tile_refs.len());
-        let grid_tiles = pyxel_tilerefs_to_ldtk(tile_refs, map_w, map_h);
+        let grid_tiles = pyxel_tilerefs_to_ldtk(tile_w, tile_refs, map_w, map_h);
 
         let mut layer_instance = build_ldtk_layer_instance();
         layer_instance.c_wid = map_w;
@@ -278,10 +278,10 @@ pub fn convert(path: &Path, data: &SharedData) {
         let mut level = build_ldtk_level(li);
         level.layer_instances = Some(vec![layer_instance]);
         level.identifier = "Level".to_owned();
-        level.identifier.push_str(format!("{}",li).as_str());
+        level.identifier.push_str(format!("{}", li).as_str());
         level.px_wid = canvas_width;
         level.px_hei = canvas_height;
-        println!("--- level identifier={}",level.identifier);
+        println!("--- level identifier={}", level.identifier);
 
         ldtk.levels.push(level);
     } // -end-layer-

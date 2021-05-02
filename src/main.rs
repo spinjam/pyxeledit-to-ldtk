@@ -143,7 +143,7 @@ fn real_main() -> i32 {
     let args: Vec<String> = env::args().collect();
     println!("args = {:?}",args);
     if args.len() < 2 {
-        println!("No arguments");
+        println!("\x1b[0;31m-- No arguments --\x1b[0m");
         return 1;
     }
     let source_pyxeledit = &args[1];
