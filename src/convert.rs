@@ -170,22 +170,7 @@ fn pyxel_tilerefs_to_ldtk(tilerefs: &Map<String, Value>, map_w: i64, map_h:i64) 
     let mut _pyxel_tilerefs: Vec<(i64, i64)> = vec![];
     let mut _pyxel_coords: Vec<(i64, i64)> = vec![];
 
-    let mut grid_tiles = vec![];
-
-    // iterate Pyxel Edit tile references
-    for (key, value) in tilerefs {
-        let tile_ref = value.as_object().unwrap();
-        let tile_pos = key.parse::<i64>().unwrap();
-        let _tile_index = tile_ref["index"].as_i64().unwrap();
-        //print!("pos={} index={}", tile_pos, tile_index);
-        //pyxel_tilerefs.push((pyxel_tile_pos, tile_index));
-
-        let pos_x = tile_pos % map_w;
-        let pos_y = tile_pos / map_w;
-        //print!("x={} y={} ",pos_x,pos_y);
-    }
-    // println!("\n");
-
+    let mut grid_tiles:Vec<TileInstance> = vec![];
     for y in 0..map_w {
         for x in 0..map_h {
             grid_tiles.push(TileInstance {
@@ -197,6 +182,22 @@ fn pyxel_tilerefs_to_ldtk(tilerefs: &Map<String, Value>, map_w: i64, map_h:i64) 
             });
         }
     }
+
+    // iterate Pyxel Edit tile references
+    for (key, value) in tilerefs {
+        let tile_ref = value.as_object().unwrap();
+        let tile_pos = key.parse::<usize>().unwrap();
+        let tile_index = tile_ref["index"].as_i64().unwrap();
+        //print!("pos={} index={}", tile_pos, tile_index);
+        //pyxel_tilerefs.push((pyxel_tile_pos, tile_index));
+
+        let pos_x:usize = tile_pos % map_w as usize;
+        let pos_y = tile_pos / map_w as usize;
+        //print!("x={} y={} ",pos_x,pos_y);
+        // let gridtile:&TileInstance = &grid_tiles[pos_y * (map_w as usize) + pos_x];
+    }
+    // println!("\n");
+
 
     grid_tiles
     /*
@@ -275,7 +276,6 @@ pub fn convert(path: &Path, data: &SharedData) {
         layer_instance.tileset_def_uid = Some(li as i64);
 
         let mut level = build_ldtk_level(li);
-
         level.layer_instances = Some(vec![layer_instance]);
         level.identifier = "Level".to_owned();
         level.identifier.push_str(format!("{}",li).as_str());
