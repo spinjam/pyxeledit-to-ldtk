@@ -78,8 +78,7 @@ fn build_ldtk_layer_instance(layer_uid: i64) -> LayerInstance {
     }
 }
 
-fn build_ldtk_level(uid: usize) -> Level {
-    println!(">>> building level...");
+fn build_ldtk_level(uid: usize, name: &str) -> Level {
     Level {
         bg_color: "".to_owned(),
         bg_pos: Option::None,
@@ -91,7 +90,7 @@ fn build_ldtk_level(uid: usize) -> Level {
         bg_rel_path: Option::None,
         external_rel_path: Option::None,
         field_instances: vec![],
-        identifier: "Level1".to_owned(),
+        identifier: name.to_owned(),
         layer_instances: Option::Some(vec![]),
         px_wid: 0, //canvas_width,
         px_hei: 0, //canvas_height,
@@ -110,18 +109,19 @@ fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
         color: "#000000".to_string(),
     };
 
-    let mut layerDefinitions:Vec<LayerDefinition> = vec![];
+    let mut layerDefinitions: Vec<LayerDefinition> = vec![];
 
     // iterate pyxel layers to build ldtk layers
-    for (li,layer) in layers.iter().rev().enumerate() {
+    for (li, layer) in layers.iter().rev().enumerate() {
         let l = layer.1.as_object().unwrap();
         let layer_name = l["name"].as_str().unwrap();
-        println!("layer defs > pyxel layer = {}",layer_name);
+        println!("layer defs > pyxel layer = {}", layer_name);
 
-        layerDefinitions.push( LayerDefinition {
+        layerDefinitions.push(LayerDefinition {
             layer_definition_type: "Tiles".to_string(),
             identifier: layer_name.to_owned(),
-            uid: tileset.uid,
+            //uid: tileset.uid,
+            uid: li as i64,
             grid_size: tile_grid_size,
             display_opacity: 1.0,
             px_offset_x: 0,
@@ -138,28 +138,6 @@ fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
             purple_type: Type::Tiles,
         });
     }
-
-    /*
-    let layerDef = LayerDefinition {
-        layer_definition_type: "Tiles".to_string(),
-        identifier: "Tiles".to_string(),
-        uid: tileset.uid,
-        grid_size: tile_grid_size,
-        display_opacity: 1.0,
-        px_offset_x: 0,
-        px_offset_y: 0,
-        required_tags: vec![],
-        excluded_tags: vec![],
-        int_grid_values: vec![],
-        auto_tileset_def_uid: Option::None,
-        auto_rule_groups: vec![],
-        auto_source_layer_def_uid: Option::None,
-        tileset_def_uid: Some(tileset.uid),
-        tile_pivot_x: 0.,
-        tile_pivot_y: 0.,
-        purple_type: Type::Tiles,
-    };
-     */
 
     let defs = Definitions {
         entities: vec![],
@@ -248,7 +226,7 @@ fn getLayerDefinitions() {}
 // -----------------------------------------------------
 pub fn convert(path: &Path, data: &SharedData) {
     println!(">>>>>> convert > data: ");
-    let layer_uid = 2;
+    let layer_uid = 1;
     let mut tileset_filename: String = data.tileset_filename.to_owned();
     tileset_filename.push_str(".png");
     println!("tileset_filename: {}", tileset_filename);
@@ -308,15 +286,15 @@ pub fn convert(path: &Path, data: &SharedData) {
         layer_instance.tileset_rel_path = Some(tileset_filename.to_owned());
         layer_instance.tileset_def_uid = Some(li as i64);
 
-        let mut level = build_ldtk_level(li);
+        println!(">>> building level...");
+        let mut level = build_ldtk_level(li, layer_name);
         level.layer_instances = Some(vec![layer_instance]);
-        level.identifier = "Level".to_owned();
-        level.identifier.push_str(format!("{}", li).as_str());
         level.px_wid = canvas_width;
         level.px_hei = canvas_height;
-        println!("--- level identifier={}", level.identifier);
+        println!("\tlevel identifier={}", level.identifier);
 
         ldtk.levels.push(level);
+        println!("---\t---\t---\t---\t---\t---");
     } // -end-layer-
 
     let json_save = serde_json::to_string_pretty(&ldtk).unwrap();
