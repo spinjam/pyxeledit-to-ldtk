@@ -48,7 +48,7 @@ fn _json_create_example() {
     "#;
 }
 
-fn build_ldtk_layer_instance(layer_uid:i64) -> LayerInstance {
+fn build_ldtk_layer_instance(layer_uid: i64) -> LayerInstance {
     println!(">>> building layer instance...");
     LayerInstance {
         c_wid: 0, // map_w,
@@ -101,7 +101,7 @@ fn build_ldtk_level(uid: usize) -> Level {
     }
 }
 
-fn build_ldtk(tileset: TilesetDefinition) -> Ldtk {
+fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
     let tile_grid_size = tileset.tile_grid_size;
 
     let intGridValDef = IntGridValueDefinition {
@@ -110,6 +110,36 @@ fn build_ldtk(tileset: TilesetDefinition) -> Ldtk {
         color: "#000000".to_string(),
     };
 
+    let mut layerDefinitions:Vec<LayerDefinition> = vec![];
+
+    // iterate pyxel layers to build ldtk layers
+    for (li,layer) in layers.iter().rev().enumerate() {
+        let l = layer.1.as_object().unwrap();
+        let layer_name = l["name"].as_str().unwrap();
+        println!("layer defs > pyxel layer = {}",layer_name);
+
+        layerDefinitions.push( LayerDefinition {
+            layer_definition_type: "Tiles".to_string(),
+            identifier: layer_name.to_owned(),
+            uid: tileset.uid,
+            grid_size: tile_grid_size,
+            display_opacity: 1.0,
+            px_offset_x: 0,
+            px_offset_y: 0,
+            required_tags: vec![],
+            excluded_tags: vec![],
+            int_grid_values: vec![],
+            auto_tileset_def_uid: Option::None,
+            auto_rule_groups: vec![],
+            auto_source_layer_def_uid: Option::None,
+            tileset_def_uid: Some(tileset.uid),
+            tile_pivot_x: 0.,
+            tile_pivot_y: 0.,
+            purple_type: Type::Tiles,
+        });
+    }
+
+    /*
     let layerDef = LayerDefinition {
         layer_definition_type: "Tiles".to_string(),
         identifier: "Tiles".to_string(),
@@ -129,12 +159,14 @@ fn build_ldtk(tileset: TilesetDefinition) -> Ldtk {
         tile_pivot_y: 0.,
         purple_type: Type::Tiles,
     };
+     */
 
     let defs = Definitions {
         entities: vec![],
         enums: vec![],
         external_enums: vec![],
-        layers: vec![layerDef],
+        //layers: vec![layerDef],
+        layers: layerDefinitions,
         level_fields: vec![],
         tilesets: vec![tileset],
     };
@@ -209,6 +241,8 @@ fn pyxel_tilerefs_to_ldtk(
     grid_tiles
 }
 
+fn getLayerDefinitions() {}
+
 // -----------------------------------------------------
 // Conversion from Pyxel Edit (Json) to LDtk
 // -----------------------------------------------------
@@ -236,9 +270,6 @@ pub fn convert(path: &Path, data: &SharedData) {
     //println!("canvas w={} h={}", canvas_width, canvas_height);
     //println!("map w={} h={}", map_w, map_h);
 
-    let num_layers = canvas.get("numLayers").unwrap();
-    println!("num layers = {}", num_layers);
-
     // LDtk tileset definition
     let tileset = TilesetDefinition {
         identifier: data.tileset_filename.to_owned(),
@@ -253,9 +284,12 @@ pub fn convert(path: &Path, data: &SharedData) {
         cached_pixel_data: Option::None,
     };
 
-    let mut ldtk: Ldtk = build_ldtk(tileset);
-
+    let num_layers = canvas.get("numLayers").unwrap();
     let layers = canvas["layers"].as_object().unwrap();
+    println!("num layers = {}", num_layers);
+
+    let mut ldtk: Ldtk = build_ldtk(tileset, layers);
+
     for (li, layer) in layers.iter().enumerate() {
         let l = layer.1.as_object().unwrap();
         let layer_type = l["type"].as_str().unwrap();
