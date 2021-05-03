@@ -48,7 +48,7 @@ fn _json_create_example() {
     "#;
 }
 
-fn build_ldtk_layer_instance() -> LayerInstance {
+fn build_ldtk_layer_instance(layer_uid:i64) -> LayerInstance {
     println!(">>> building layer instance...");
     LayerInstance {
         c_wid: 0, // map_w,
@@ -58,7 +58,7 @@ fn build_ldtk_layer_instance() -> LayerInstance {
         opacity: 1.,
         px_total_offset_x: 0,
         px_total_offset_y: 0,
-        tileset_def_uid: Option::None,
+        tileset_def_uid: Some(layer_uid),
         tileset_rel_path: Some("".to_owned()),
         /// Layer type (possible values: IntGrid, Entities, Tiles or AutoLayer)
         layer_instance_type: "Tiles".to_owned(),
@@ -68,7 +68,7 @@ fn build_ldtk_layer_instance() -> LayerInstance {
         int_grid: Option::None,
         int_grid_csv: vec![],
         /// Reference the Layer definition UID (important!)
-        layer_def_uid: 2,
+        layer_def_uid: layer_uid,
         level_id: 0,
         override_tileset_uid: Option::None,
         px_offset_x: 0,
@@ -113,8 +113,7 @@ fn build_ldtk(tileset: TilesetDefinition) -> Ldtk {
     let layerDef = LayerDefinition {
         layer_definition_type: "Tiles".to_string(),
         identifier: "Tiles".to_string(),
-        /// important: same in LayerInstance (?)
-        uid: 2,
+        uid: tileset.uid,
         grid_size: tile_grid_size,
         display_opacity: 1.0,
         px_offset_x: 0,
@@ -125,7 +124,7 @@ fn build_ldtk(tileset: TilesetDefinition) -> Ldtk {
         auto_tileset_def_uid: Option::None,
         auto_rule_groups: vec![],
         auto_source_layer_def_uid: Option::None,
-        tileset_def_uid: Some(2),
+        tileset_def_uid: Some(tileset.uid),
         tile_pivot_x: 0.,
         tile_pivot_y: 0.,
         purple_type: Type::Tiles,
@@ -215,6 +214,7 @@ fn pyxel_tilerefs_to_ldtk(
 // -----------------------------------------------------
 pub fn convert(path: &Path, data: &SharedData) {
     println!(">>>>>> convert > data: ");
+    let layer_uid = 2;
     let mut tileset_filename: String = data.tileset_filename.to_owned();
     tileset_filename.push_str(".png");
     println!("tileset_filename: {}", tileset_filename);
@@ -223,7 +223,7 @@ pub fn convert(path: &Path, data: &SharedData) {
 
     let ver = json["version"].as_str().unwrap();
     let pyxel_name = json["name"].as_str().unwrap();
-    println!("--- pyxel edit data '{}' (ver {}) ---", pyxel_name, ver);
+    println!("--- Pyxel Edit: filename '{}' (ver {}) ---", pyxel_name, ver);
 
     // -- get info from pyxel edit file
     let canvas = json["canvas"].as_object().unwrap();
@@ -237,13 +237,12 @@ pub fn convert(path: &Path, data: &SharedData) {
     //println!("map w={} h={}", map_w, map_h);
 
     let num_layers = canvas.get("numLayers").unwrap();
-    //println!("num layers = {}", num_layers);
+    println!("num layers = {}", num_layers);
 
     // LDtk tileset definition
     let tileset = TilesetDefinition {
-        identifier: "sokoban-6".to_owned(),
-        uid: 2,
-        //rel_path: "sokoban-6.png".to_owned(),
+        identifier: data.tileset_filename.to_owned(),
+        uid: layer_uid,
         rel_path: String::from(tileset_filename.to_owned()),
         px_wid: data.tileset_w,
         px_hei: data.tileset_h,
@@ -267,7 +266,7 @@ pub fn convert(path: &Path, data: &SharedData) {
         //println!("num tile refs {}", tile_refs.len());
         let grid_tiles = pyxel_tilerefs_to_ldtk(tile_w, tile_refs, map_w, map_h);
 
-        let mut layer_instance = build_ldtk_layer_instance();
+        let mut layer_instance = build_ldtk_layer_instance(layer_uid);
         layer_instance.c_wid = map_w;
         layer_instance.c_hei = map_h;
         layer_instance.grid_size = tile_w;
@@ -287,7 +286,6 @@ pub fn convert(path: &Path, data: &SharedData) {
     } // -end-layer-
 
     let json_save = serde_json::to_string_pretty(&ldtk).unwrap();
-    // println!("{}", json_save);
 
     // [] WRITE LDTK (json) file
     let mut ldtk_path = PathBuf::new();
