@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use crate::ldtk::*;
 use std::fs::File;
 use std::collections::HashMap;
-use image::imageops::tile;
+// use image::imageops::tile;
 use crate::SharedData;
 use serde_json::{Map, Value};
 
@@ -103,13 +103,13 @@ fn build_ldtk_level(uid: usize, name: &str) -> Level {
 fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
     let tile_grid_size = tileset.tile_grid_size;
 
-    let intGridValDef = IntGridValueDefinition {
+    let _int_grid_val_def = IntGridValueDefinition {
         value: 1,
         identifier: Option::None,
         color: "#000000".to_string(),
     };
 
-    let mut layerDefinitions: Vec<LayerDefinition> = vec![];
+    let mut layer_definitions: Vec<LayerDefinition> = vec![];
 
     // iterate pyxel layers to build ldtk layers
     for (li, layer) in layers.iter().rev().enumerate() {
@@ -117,7 +117,7 @@ fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
         let layer_name = l["name"].as_str().unwrap();
         println!("layer defs > pyxel layer = {}", layer_name);
 
-        layerDefinitions.push(LayerDefinition {
+        layer_definitions.push(LayerDefinition {
             layer_definition_type: "Tiles".to_string(),
             identifier: layer_name.to_owned(),
             //uid: tileset.uid,
@@ -144,7 +144,7 @@ fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
         enums: vec![],
         external_enums: vec![],
         //layers: vec![layerDef],
-        layers: layerDefinitions,
+        layers: layer_definitions,
         level_fields: vec![],
         tilesets: vec![tileset],
     };
@@ -179,7 +179,8 @@ fn build_ldtk(tileset: TilesetDefinition, layers: &Map<String, Value>) -> Ldtk {
 fn pyxel_tilerefs_to_ldtk(
     tile_w: i64,
     tilerefs: &Map<String, Value>,
-    map_w: i64, map_h: i64,
+    map_w: i64,
+    map_h: i64,
 ) -> Vec<TileInstance> {
     let mut grid_tiles: Vec<TileInstance> = vec![];
 
@@ -218,8 +219,6 @@ fn pyxel_tilerefs_to_ldtk(
 
     grid_tiles
 }
-
-fn getLayerDefinitions() {}
 
 // -----------------------------------------------------
 // Conversion from Pyxel Edit (Json) to LDtk
@@ -270,7 +269,7 @@ pub fn convert(path: &Path, data: &SharedData) {
 
     for (li, layer) in layers.iter().enumerate() {
         let l = layer.1.as_object().unwrap();
-        let layer_type = l["type"].as_str().unwrap();
+        let _layer_type = l["type"].as_str().unwrap();
         let layer_name = l["name"].as_str().unwrap();
         //println!("#{}: name='{}' type={}", layer.0, layer_name, layer_type);
 

@@ -27,7 +27,7 @@ fn build_tileset_image(path: &Path) -> SharedData {
 
     let mut tiles: Vec<&str> = Vec::new(); // tile filenames (no folder)
 
-    let source_filename = path.to_str().unwrap();
+    let _source_filename = path.to_str().unwrap();
     let source_file = path.file_name().unwrap().to_os_string().into_string().unwrap();
     let source_name = path.file_stem().unwrap().to_os_string().into_string().unwrap();
 
