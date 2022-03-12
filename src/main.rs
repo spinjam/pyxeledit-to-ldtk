@@ -22,6 +22,7 @@ fn main() {
 }
 
 fn build_tileset_image(path: &Path) -> SharedData {
+    println!("------------ TILESET IMAGE -------------");
     let temp_dir = env::temp_dir();
     println!("Temporary directory: {}", temp_dir.display());
 
@@ -32,9 +33,6 @@ fn build_tileset_image(path: &Path) -> SharedData {
     let source_name = path.file_stem().unwrap().to_os_string().into_string().unwrap();
 
     println!("source file = {}",source_file);
-    println!("source name (no ext) = {}", source_name); // no extension
-    //let parent = path.parent().unwrap();
-    //println!("parent = {:?}", parent.as_os_str());
     print!(">>> Reading file {:?}\n", path.as_os_str());
 
     // [1] Open pyxel archive file (pyxel extension - a zip file)
@@ -120,7 +118,6 @@ fn build_tileset_image(path: &Path) -> SharedData {
     dest_path.push("target");
     dest_path.push(source_name.to_owned());
     dest_path.set_extension("png");
-    println!(">>> SAVING tileset image={}", dest_path.to_string_lossy());
 
     // [7] SAVE image
     dest_img.save(dest_path).unwrap();
@@ -128,7 +125,6 @@ fn build_tileset_image(path: &Path) -> SharedData {
     // [8] remove temp dir
     fs::remove_dir_all(path_dest).expect("Remove dir with error");
 
-    //(dest_x, dest_y)
     SharedData {
         tileset_filename: source_name.clone(),
         tileset_w: dest_x as i64,
@@ -141,7 +137,6 @@ fn build_tileset_image(path: &Path) -> SharedData {
 // -----------------------------------------
 fn real_main() -> i32 {
     let args: Vec<String> = env::args().collect();
-    println!("args = {:?}",args);
     if args.len() < 2 {
         println!("\x1b[0;31m-- No arguments --\x1b[0m");
         return 1;

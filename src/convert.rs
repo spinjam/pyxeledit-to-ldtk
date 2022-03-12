@@ -4,7 +4,6 @@ use std::io::{Read, Write};
 use crate::ldtk::*;
 use std::fs::File;
 use std::collections::HashMap;
-// use image::imageops::tile;
 use crate::SharedData;
 use serde_json::{Map, Value};
 
@@ -180,12 +179,11 @@ fn pyxel_tilerefs_to_ldtk(
     tile_w: i64,
     tilerefs: &Map<String, Value>,
     map_w: i64,
-    map_h: i64,
+    _map_h: i64,
 ) -> Vec<TileInstance> {
     let mut grid_tiles: Vec<TileInstance> = vec![];
 
     // iterate Pyxel Edit tile references
-    let mut counter = 0;
     for (key, value) in tilerefs {
         let tile_ref = value.as_object().unwrap();
         let tile_pos = key.parse::<i64>().unwrap();
@@ -214,7 +212,6 @@ fn pyxel_tilerefs_to_ldtk(
             // d: vec![tile_index],
             d: vec![pos_y * map_w + pos_x],
         });
-        counter += 1;
     }
 
     grid_tiles
@@ -224,7 +221,7 @@ fn pyxel_tilerefs_to_ldtk(
 // Conversion from Pyxel Edit (Json) to LDtk
 // -----------------------------------------------------
 pub fn convert(path: &Path, data: &SharedData) {
-    println!(">>>>>> convert > data: ");
+    println!("------------ CONVERT -------------");
     let layer_uid = 1;
     let mut tileset_filename: String = data.tileset_filename.to_owned();
     tileset_filename.push_str(".png");
@@ -293,7 +290,7 @@ pub fn convert(path: &Path, data: &SharedData) {
         println!("\tlevel identifier={}", level.identifier);
 
         ldtk.levels.push(level);
-        println!("---\t---\t---\t---\t---\t---");
+        println!("------------------");
     } // -end-layer-
 
     let json_save = serde_json::to_string_pretty(&ldtk).unwrap();
